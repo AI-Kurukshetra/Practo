@@ -16,24 +16,37 @@ type AppointmentRow = {
   patient_name: string;
   appointment_time: string;
   status: string;
-  doctors?: {
-    full_name: string;
-  } | null;
+  doctors?:
+    | {
+        full_name: string;
+      }
+    | {
+        full_name: string;
+      }[]
+    | null;
 };
 
 type ActivityRow = {
   id: string;
   old_status: string;
   new_status: string;
-  actor: string | null;
+  actor?: string | null;
   created_at: string;
-  appointments?: {
-    patient_name: string;
-    doctor_id: string | null;
-    doctors?: {
-      full_name: string;
-    } | null;
-  } | null;
+  appointments?:
+    | {
+        patient_name: string;
+        doctor_id: string | null;
+        doctors?: {
+          full_name: string;
+        } | null;
+      }
+    | {
+        patient_name: string;
+        doctors?: {
+          full_name: string;
+        }[];
+      }[]
+    | null;
 };
 
 const fallbackDoctors = [
@@ -160,6 +173,11 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 space-y-3">
             {safeAppointments.map((appointment) => (
+              (() => {
+                const doctorName = Array.isArray(appointment.doctors)
+                  ? appointment.doctors[0]?.full_name
+                  : appointment.doctors?.full_name;
+                return (
               <Link
                 key={appointment.id}
                 href={`/appointments/${appointment.id}`}
@@ -170,7 +188,7 @@ export default async function DashboardPage() {
                     {appointment.patient_name}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {appointment.doctors?.full_name ?? "Unassigned"}
+                    {doctorName ?? "Unassigned"}
                   </p>
                 </div>
                 <div className="text-sm text-slate-600">
@@ -180,6 +198,8 @@ export default async function DashboardPage() {
                   {appointment.status}
                 </div>
               </Link>
+                );
+              })()
             ))}
           </div>
         </section>
@@ -207,7 +227,9 @@ export default async function DashboardPage() {
               ))}
             </div>
           </section>
-          <ActivityFeed initialEvents={(activityEvents ?? []) as ActivityRow[]} />
+          <ActivityFeed
+            initialEvents={(activityEvents ?? []) as unknown as ActivityRow[]}
+          />
         </div>
       </main>
     </div>

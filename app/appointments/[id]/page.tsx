@@ -7,10 +7,16 @@ type AppointmentRow = {
   patient_name: string;
   appointment_time: string;
   status: string;
-  doctors?: {
-    full_name: string;
-    status?: string | null;
-  } | null;
+  doctors?:
+    | {
+        full_name: string;
+        status?: string | null;
+      }
+    | {
+        full_name: string;
+        status?: string | null;
+      }[]
+    | null;
 };
 
 function formatTime(value: string) {
@@ -51,7 +57,10 @@ export default async function AppointmentDetailPage({
   }
 
   const appointment: AppointmentRow = data;
-  const doctorStatus = appointment.doctors?.status ?? null;
+  const doctorInfo = Array.isArray(appointment.doctors)
+    ? appointment.doctors[0]
+    : appointment.doctors;
+  const doctorStatus = doctorInfo?.status ?? null;
   const isDoctorUnavailable =
     doctorStatus === "On Leave" || doctorStatus === "In Surgery";
   const isPastAppointment =
@@ -89,7 +98,7 @@ export default async function AppointmentDetailPage({
                 Doctor
               </p>
               <p className="mt-1 font-semibold text-slate-900">
-                {appointment.doctors?.full_name ?? "Unassigned"}
+                {doctorInfo?.full_name ?? "Unassigned"}
               </p>
               {doctorStatus ? (
                 <p className="mt-1 text-xs text-slate-500">{doctorStatus}</p>

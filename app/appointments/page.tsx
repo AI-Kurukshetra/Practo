@@ -11,9 +11,14 @@ type Appointment = {
   patient_name: string;
   appointment_time: string;
   status: string;
-  doctors?: {
-    full_name: string;
-  } | null;
+  doctors?:
+    | {
+        full_name: string;
+      }
+    | {
+        full_name: string;
+      }[]
+    | null;
 };
 
 const STATUS_OPTIONS = ["Confirmed", "Pending", "Rescheduled"] as const;
@@ -213,6 +218,11 @@ export default function AppointmentsPage() {
               key={appointment.id}
               className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
             >
+              {(() => {
+                const doctorName = Array.isArray(appointment.doctors)
+                  ? appointment.doctors[0]?.full_name
+                  : appointment.doctors?.full_name;
+                return (
               <div>
                 <Link
                   href={`/appointments/${appointment.id}`}
@@ -221,12 +231,14 @@ export default function AppointmentsPage() {
                   {appointment.patient_name}
                 </Link>
                 <p className="text-xs text-slate-500">
-                  {appointment.doctors?.full_name ?? "Unassigned"}
+                  {doctorName ?? "Unassigned"}
                 </p>
                 {new Date(appointment.appointment_time).getTime() < Date.now() ? (
                   <p className="mt-1 text-xs text-slate-500">Past appointment</p>
                 ) : null}
               </div>
+                );
+              })()}
               <div className="text-sm text-slate-600">
                 {formatTime(appointment.appointment_time)}
               </div>

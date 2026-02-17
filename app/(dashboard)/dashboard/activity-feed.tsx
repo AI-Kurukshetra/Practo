@@ -10,12 +10,20 @@ type EventRow = {
   created_at: string;
   actor?: string | null;
   source?: string | null;
-  appointments?: {
-    patient_name: string;
-    doctors?: {
-      full_name: string;
-    } | null;
-  } | null;
+  appointments?:
+    | {
+        patient_name: string;
+        doctors?: {
+          full_name: string;
+        } | null;
+      }
+    | {
+        patient_name: string;
+        doctors?: {
+          full_name: string;
+        }[];
+      }[]
+    | null;
 };
 
 function formatRelativeTime(value: string) {
@@ -105,9 +113,14 @@ const inserted: EventRow = {
       <h2 className="text-lg font-semibold text-slate-900">Activity</h2>
       <div className="mt-4 space-y-3 text-sm text-slate-700">
         {events.map((event) => {
-          const patientName = event.appointments?.patient_name ?? "Unknown patient";
+          const appointment = Array.isArray(event.appointments)
+            ? event.appointments[0]
+            : event.appointments;
+          const patientName = appointment?.patient_name ?? "Unknown patient";
           const doctorName =
-            event.appointments?.doctors?.full_name ?? "Doctor unavailable";
+            Array.isArray(appointment?.doctors)
+              ? appointment?.doctors[0]?.full_name
+              : appointment?.doctors?.full_name ?? "Doctor unavailable";
           const action = event.new_status.toLowerCase();
 
           return (
