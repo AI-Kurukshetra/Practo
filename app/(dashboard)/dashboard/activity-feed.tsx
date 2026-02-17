@@ -74,7 +74,22 @@ export default function ActivityFeed({
             return;
           }
 
-          const inserted = data[0] as EventRow;
+const raw = data[0];
+
+const inserted: EventRow = {
+  id: raw.id,
+  old_status: raw.old_status,
+  new_status: raw.new_status,
+  created_at: raw.created_at,
+  appointments: raw.appointments?.[0]
+    ? {
+        patient_name: raw.appointments[0].patient_name,
+        doctors: raw.appointments[0].doctors?.[0]
+          ? { full_name: raw.appointments[0].doctors[0].full_name }
+          : null,
+      }
+    : null,
+};
           setEvents((prev) => [inserted, ...prev].slice(0, 10));
         }
       )
