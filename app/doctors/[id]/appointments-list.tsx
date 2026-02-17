@@ -23,6 +23,11 @@ function formatTime(value: string) {
   });
 }
 
+function isPastAppointment(value: string, nowMs: number) {
+  const time = new Date(value).getTime();
+  return !Number.isNaN(time) && time < nowMs;
+}
+
 export default function AppointmentsList({
   appointments,
   doctorId,
@@ -37,6 +42,7 @@ export default function AppointmentsList({
   const [patientName, setPatientName] = useState("");
   const [appointmentTime, setAppointmentTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nowMs = Date.now();
 
   async function handleStatusChange(id: string, nextStatus: string) {
     const previousStatus = items.find((item) => item.id === id)?.status;
@@ -168,7 +174,9 @@ export default function AppointmentsList({
         </div>
       </form>
       <div className="mt-4 space-y-3">
-        {items.map((appointment) => (
+        {items.map((appointment) => {
+          const isPast = isPastAppointment(appointment.appointment_time, nowMs);
+          return (
           <div
             key={appointment.id}
             className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 px-4 py-3"
@@ -180,11 +188,11 @@ export default function AppointmentsList({
               <p className="text-xs text-slate-500">
                 {formatTime(appointment.appointment_time)}
               </p>
-              {new Date(appointment.appointment_time).getTime() < Date.now() ? (
+              {isPast ? (
                 <p className="mt-1 text-xs text-slate-500">Past appointment</p>
               ) : null}
             </div>
-            {new Date(appointment.appointment_time).getTime() < Date.now() ? (
+            {isPast ? (
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                 {appointment.status}
               </span>
@@ -209,7 +217,8 @@ export default function AppointmentsList({
               </select>
             )}
           </div>
-        ))}
+          );
+        })}
         {items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
             No appointments yet for this doctor.

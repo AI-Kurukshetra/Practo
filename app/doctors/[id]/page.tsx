@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AppointmentsList from "./appointments-list";
 
@@ -46,12 +47,12 @@ export default async function DoctorDetailPage({
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <a
+        <Link
           href="/dashboard"
           className="text-sm font-medium text-slate-600 hover:text-slate-900"
         >
           ← Back to Dashboard
-        </a>
+        </Link>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-3xl font-semibold text-slate-900">
             {doctor.full_name}

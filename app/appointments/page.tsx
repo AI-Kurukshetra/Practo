@@ -36,6 +36,11 @@ function formatTime(value: string) {
   });
 }
 
+function isPastAppointment(value: string, nowMs: number) {
+  const time = new Date(value).getTime();
+  return !Number.isNaN(time) && time < nowMs;
+}
+
 export default function AppointmentsPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [items, setItems] = useState<Appointment[]>([]);
@@ -43,6 +48,7 @@ export default function AppointmentsPage() {
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterOption>("Today");
+  const nowMs = Date.now();
 
   useEffect(() => {
     let isMounted = true;
@@ -213,7 +219,9 @@ export default function AppointmentsPage() {
         </div>
 
         <div className="mt-6 space-y-3">
-          {items.map((appointment) => (
+          {items.map((appointment) => {
+            const isPast = isPastAppointment(appointment.appointment_time, nowMs);
+            return (
             <div
               key={appointment.id}
               className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
@@ -233,7 +241,7 @@ export default function AppointmentsPage() {
                 <p className="text-xs text-slate-500">
                   {doctorName ?? "Unassigned"}
                 </p>
-                {new Date(appointment.appointment_time).getTime() < Date.now() ? (
+                {isPast ? (
                   <p className="mt-1 text-xs text-slate-500">Past appointment</p>
                 ) : null}
               </div>
@@ -242,7 +250,7 @@ export default function AppointmentsPage() {
               <div className="text-sm text-slate-600">
                 {formatTime(appointment.appointment_time)}
               </div>
-              {new Date(appointment.appointment_time).getTime() < Date.now() ? (
+              {isPast ? (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                   {appointment.status}
                 </span>
@@ -269,7 +277,8 @@ export default function AppointmentsPage() {
                 </select>
               )}
             </div>
-          ))}
+            );
+          })}
           {items.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
               No appointments available yet.

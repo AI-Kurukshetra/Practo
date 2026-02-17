@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AppointmentStatusCard from "./status-card";
 
@@ -28,6 +29,11 @@ function formatTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function isPastAppointment(value: string, nowMs: number) {
+  const time = new Date(value).getTime();
+  return !Number.isNaN(time) && time < nowMs;
 }
 
 export default async function AppointmentDetailPage({
@@ -61,11 +67,11 @@ export default async function AppointmentDetailPage({
     ? appointment.doctors[0]
     : appointment.doctors;
   const doctorStatus = doctorInfo?.status ?? null;
+  const nowMs = Date.now();
   const isDoctorUnavailable =
     doctorStatus === "On Leave" || doctorStatus === "In Surgery";
-  const isPastAppointment =
-    new Date(appointment.appointment_time).getTime() < Date.now();
-  const disabledReason = isPastAppointment
+  const isPast = isPastAppointment(appointment.appointment_time, nowMs);
+  const disabledReason = isPast
     ? "Past appointment"
     : isDoctorUnavailable
       ? `Status updates are disabled while the doctor is ${doctorStatus}.`
@@ -74,12 +80,12 @@ export default async function AppointmentDetailPage({
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <a
+        <Link
           href="/dashboard"
           className="text-sm font-medium text-slate-600 hover:text-slate-900"
         >
           ← Back to Dashboard
-        </a>
+        </Link>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-3xl font-semibold text-slate-900">
             Appointment details
@@ -118,7 +124,7 @@ export default async function AppointmentDetailPage({
         <AppointmentStatusCard
           appointmentId={appointment.id}
           status={appointment.status}
-          disabled={isDoctorUnavailable || isPastAppointment}
+          disabled={isDoctorUnavailable || isPast}
           helperText={disabledReason}
         />
       </div>
