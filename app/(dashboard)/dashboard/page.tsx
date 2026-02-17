@@ -1,3 +1,6 @@
+import Link from "next/link";
+import ActivityFeed from "./activity-feed";
+import TopNav from "@/app/components/top-nav";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type DoctorRow = {
@@ -9,11 +12,27 @@ type DoctorRow = {
 
 type AppointmentRow = {
   id: string;
+  doctor_id: string | null;
   patient_name: string;
   appointment_time: string;
   status: string;
   doctors?: {
     full_name: string;
+  } | null;
+};
+
+type ActivityRow = {
+  id: string;
+  old_status: string;
+  new_status: string;
+  actor: string | null;
+  created_at: string;
+  appointments?: {
+    patient_name: string;
+    doctor_id: string | null;
+    doctors?: {
+      full_name: string;
+    } | null;
   } | null;
 };
 
@@ -41,6 +60,7 @@ const fallbackDoctors = [
 const fallbackAppointments = [
   {
     id: "fallback-a1",
+    doctor_id: "fallback-1",
     patient_name: "Sameer Gupta",
     appointment_time: "2026-02-17T10:30:00+05:30",
     status: "Confirmed",
@@ -48,6 +68,7 @@ const fallbackAppointments = [
   },
   {
     id: "fallback-a2",
+    doctor_id: "fallback-2",
     patient_name: "Anita Rao",
     appointment_time: "2026-02-17T11:15:00+05:30",
     status: "Pending",
@@ -55,6 +76,7 @@ const fallbackAppointments = [
   },
   {
     id: "fallback-a3",
+    doctor_id: "fallback-3",
     patient_name: "Pranav Iyer",
     appointment_time: "2026-02-17T12:10:00+05:30",
     status: "Rescheduled",
@@ -76,17 +98,29 @@ function formatTime(value: string) {
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: doctors, error: doctorsError }, { data: appointments, error: appointmentsError }] =
-    await Promise.all([
-      supabase
-        .from("doctors")
-        .select("id, full_name, specialty, status")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("appointments")
-        .select("id, patient_name, appointment_time, status, doctors(full_name)")
-        .order("appointment_time", { ascending: true }),
-    ]);
+  const [
+    { data: doctors, error: doctorsError },
+    { data: appointments, error: appointmentsError },
+    { data: activityEvents },
+  ] = await Promise.all([
+    supabase
+      .from("doctors")
+      .select("id, full_name, specialty, status")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("appointments")
+      .select(
+        "id, doctor_id, patient_name, appointment_time, status, doctors(full_name)"
+      )
+      .order("appointment_time", { ascending: true }),
+    supabase
+      .from("appointment_events")
+      .select(
+        "id, old_status, new_status, created_at, appointments(patient_name, doctors(full_name))"
+      )
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
 
   const safeDoctors = doctorsError || !doctors?.length ? fallbackDoctors : doctors;
   const safeAppointments =
@@ -114,6 +148,7 @@ export default async function DashboardPage() {
           Live demo data
         </div>
       </header>
+      <TopNav />
 
       <main className="mx-auto grid w-full max-w-6xl gap-6 px-6 pb-16 lg:grid-cols-3">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
@@ -125,9 +160,10 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 space-y-3">
             {safeAppointments.map((appointment) => (
-              <div
+              <Link
                 key={appointment.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 px-4 py-3"
+                href={`/appointments/${appointment.id}`}
+                className="flex cursor-pointer flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-slate-300 hover:shadow"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
@@ -143,32 +179,36 @@ export default async function DashboardPage() {
                 <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                   {appointment.status}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Available doctors
-          </h2>
-          <div className="mt-4 space-y-3">
-            {safeDoctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                className="rounded-2xl border border-slate-200 px-4 py-3"
-              >
-                <p className="text-sm font-semibold text-slate-900">
-                  {doctor.full_name}
-                </p>
-                <p className="text-xs text-slate-500">{doctor.specialty}</p>
-                <p className="mt-2 text-xs font-semibold text-slate-700">
-                  {doctor.status}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="space-y-6">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Available doctors
+            </h2>
+            <div className="mt-4 space-y-3">
+              {safeDoctors.map((doctor) => (
+                <Link
+                  key={doctor.id}
+                  href={`/doctors/${doctor.id}`}
+                  className="block cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow"
+                >
+                  <p className="text-sm font-semibold text-slate-900">
+                    {doctor.full_name}
+                  </p>
+                  <p className="text-sm text-slate-600">{doctor.specialty}</p>
+                  <p className="mt-2 text-sm font-medium text-slate-700">
+                    {doctor.status}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+          <ActivityFeed initialEvents={(activityEvents ?? []) as ActivityRow[]} />
+        </div>
       </main>
     </div>
   );

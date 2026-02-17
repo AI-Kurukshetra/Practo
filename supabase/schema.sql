@@ -19,3 +19,13 @@ create table if not exists public.appointments (
   notes text,
   created_at timestamptz not null default now()
 );
+
+create table if not exists public.appointment_events (
+  id uuid primary key default gen_random_uuid(),
+  appointment_id uuid not null references public.appointments (id) on delete cascade,
+  old_status text not null,
+  new_status text not null,
+  actor text not null default 'Admin',
+  source text not null default 'Dashboard',
+  created_at timestamptz not null default now()
+);

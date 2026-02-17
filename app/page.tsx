@@ -24,16 +24,16 @@ export default function Home() {
         </div>
         <nav className="flex items-center gap-3">
           <Link
-            href="/login"
+            href="/dashboard"
             className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900"
           >
-            Log in
+            Enter Demo
           </Link>
           <Link
-            href="/signup"
+            href="/dashboard"
             className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
           >
-            Sign up
+            View Demo Dashboard
           </Link>
         </nav>
       </header>
@@ -56,15 +56,12 @@ export default function Home() {
                 href="/dashboard"
                 className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                View Dashboard
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-900 hover:border-slate-400"
-              >
-                Create Account
+                View Demo Dashboard
               </Link>
             </div>
+            <p className="text-xs text-slate-500">
+              Demo mode — no authentication required
+            </p>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
