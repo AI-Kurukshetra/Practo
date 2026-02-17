@@ -28,6 +28,12 @@ function isPastAppointment(value: string, nowMs: number) {
   return !Number.isNaN(time) && time < nowMs;
 }
 
+function toLocalDateTimeInputValue(date: Date) {
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  const local = new Date(date.getTime() - offsetMs);
+  return local.toISOString().slice(0, 16);
+}
+
 export default function AppointmentsList({
   appointments,
   doctorId,
@@ -43,6 +49,7 @@ export default function AppointmentsList({
   const [appointmentTime, setAppointmentTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nowMs = Date.now();
+  const minDateTime = toLocalDateTimeInputValue(new Date());
 
   async function handleStatusChange(id: string, nextStatus: string) {
     const previousStatus = items.find((item) => item.id === id)?.status;
@@ -107,6 +114,9 @@ export default function AppointmentsList({
     if (!patientName || !appointmentTime) {
       return;
     }
+    if (isPastAppointment(appointmentTime, nowMs)) {
+      return;
+    }
     setIsSubmitting(true);
     const isoTime = new Date(appointmentTime).toISOString();
     console.log("Insert appointment", {
@@ -159,6 +169,7 @@ export default function AppointmentsList({
               type="datetime-local"
               value={appointmentTime}
               onChange={(event) => setAppointmentTime(event.target.value)}
+              min={minDateTime}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
             />
           </div>
